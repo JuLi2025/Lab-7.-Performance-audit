@@ -1,11 +1,11 @@
-import { useLayoutEffect } from 'react';
+import { useEffect } from 'react';
 
 function isInViewport(rect) {
   return rect.bottom > 0 && rect.top < window.innerHeight;
 }
 
 export function useBioClamp(containerRef, deps) {
-  useLayoutEffect(() => {
+  useEffect(() => {
     const container = containerRef.current;
     if (!container) return undefined;
 
