@@ -23,13 +23,42 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sortBy, setSortBy] = useState('recommended');
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
   const [favorites, setFavorites] = useLocalStorage('tutor-favorites', []);
   const [toast, setToast] = useState(null);
   const reference = useReferenceData();
 
   const visible = getVisibleTutors(tutors, { query, filters, sortBy });
+  const tutorsPerPage = 20;
+  const totalPages = Math.ceil(visible.length / tutorsPerPage);
+
+  const startIndex = (currentPage - 1) * tutorsPerPage;
+  const paginatedTutors = visible.slice(
+    startIndex,
+    startIndex + tutorsPerPage
+  );
   const selected = tutors.find((t) => t.id === selectedId);
+
+  const handleQueryChange = (value) => {
+    setQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    setCurrentPage(1);
+  };
+
+  const handleFiltersChange = (patch) => {
+    setFilters({ ...filters, ...patch });
+    setCurrentPage(1);
+  };
+
+  const handleFiltersReset = () => {
+    setFilters(DEFAULT_FILTERS);
+    setCurrentPage(1);
+  };
 
   const toggleFavorite = (id) => {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -48,28 +77,50 @@ export default function App() {
           filters={filters}
           reference={reference}
           tutors={tutors}
-          onChange={(patch) => setFilters({ ...filters, ...patch })}
-          onReset={() => setFilters(DEFAULT_FILTERS)}
+          onChange={handleFiltersChange}
+          onReset={handleFiltersReset}
         />
         <section className="results">
           <SearchBar
             query={query}
-            onQueryChange={setQuery}
+            onQueryChange={handleQueryChange}
             sortBy={sortBy}
-            onSortChange={setSortBy}
+            onSortChange={handleSortChange}
             count={visible.length}
           />
           {visible.length === 0 ? (
-            <EmptyState query={query} tutors={tutors} onPick={setQuery} />
+            <EmptyState query={query} tutors={tutors} onPick={handleQueryChange} />
           ) : (
-            <TutorList
-              tutors={visible}
-              favorites={favorites}
-              selectedId={selectedId}
-              onSelect={(id) => setSelectedId(id)}
-              onToggleFavorite={toggleFavorite}
-              style={{ marginTop: 16 }}
-            />
+            <>
+              <TutorList
+                tutors={paginatedTutors}
+                favorites={favorites}
+                selectedId={selectedId}
+                onSelect={(id) => setSelectedId(id)}
+                onToggleFavorite={toggleFavorite}
+                style={{ marginTop: 16 }}
+              />
+
+              <div className="pagination">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((page) => page - 1)}>
+                  Попередня
+                </button>
+
+                <span>
+                  Сторінка {currentPage} з {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((page) => page + 1)}>
+                  Наступна
+                </button>
+              </div>
+            </>
           )}
         </section>
       </main>
