@@ -34,5 +34,9 @@ export function applyFilters(list, filters) {
 
 export function getVisibleTutors(list, { query, filters, sortBy }) {
   const result = applyFilters(list, filters).filter((tutor) => matchesQuery(tutor, query));
+  if (sortBy === 'recommended') {
+    const scores = new Map(result.map((tutor) => [tutor, tutorScore(tutor)]));
+    return result.sort((a, b) => scores.get(b) - scores.get(a));
+  }
   return result.sort(comparators[sortBy] || comparators.recommended);
 }
